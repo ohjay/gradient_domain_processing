@@ -48,15 +48,15 @@ def reconstruct(image):
 
     # So `b` will be constructed in the same order
     # (...x-gradients..., ...y-gradients..., s(0, 0))
-    filter_dx = np.array([[1, -1]])
+    filter_dx = np.array([[1, -1]]) # recall that convolution kernels are flipped
     filter_dy = np.array([[1], [-1]])
     dx = signal.fftconvolve(image, filter_dx, mode='valid').flatten()
     dy = signal.fftconvolve(image, filter_dy, mode='valid').flatten()
-    b = np.concatenate((dx, dy, [image[0, 0]])) # TODO final (single pixel) constraint doesn't seem to matter much; investigate
+    b = np.concatenate((dx, dy, [image[0, 0]]))
 
     # Solve
     v = sparse.linalg.lsqr(A, b, iter_lim=1e3)[0]
-    v = np.reshape(v, (height, width))
+    v = np.clip(np.reshape(v, (height, width)), 0, 255)
     print('Time elapsed: %.4fs' % (time.time() - start_time))
     plt.imshow(v, cmap='gray')
     plt.show()
