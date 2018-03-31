@@ -98,6 +98,10 @@ def lasso(image):
 
 # TODO create drag-and-drop interface for adding source image to target image
 
+#########
+# DEBUG #
+#########
+
 if __name__ == '__main__':
     from scipy import misc
     output = lasso(misc.imread('images/penguin_chick.jpg'))
