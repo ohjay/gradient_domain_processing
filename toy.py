@@ -60,7 +60,7 @@ def reconstruct(image):
     print('Time elapsed: %.4fs' % (time.time() - start_time))
     plt.imshow(v, cmap='gray')
     plt.show()
-    misc.imsave('reconstructed.png', v)
+    misc.imsave('images/reconstructed.png', v)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
