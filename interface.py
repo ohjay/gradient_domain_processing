@@ -79,7 +79,7 @@ def lasso(image):
         ax.clear()
         ax.imshow(selected)
         ax.set_title(TITLE)
-        ax.plot(*p.vertices.T)
+        ax.plot(*p.vertices.T, scalex=False, scaley=False)
         fig.canvas.draw_idle()
 
     def quit_figure(event):
@@ -96,7 +96,69 @@ def lasso(image):
 # GDF SOURCE PLACEMENT #
 ########################
 
-# TODO create drag-and-drop interface for adding source image to target image
+def drag_layer(source, target):
+    """Drag-and-drop interface for adding source image to target image."""
+    assert source.shape[-1] == 4  # assume alpha channel
+    assert target.shape[-1] == 3  # assume no alpha channel
+    assert np.less(source.shape[:-1], target.shape[:-1]).all()
+
+    if source.dtype == np.uint8:
+        source = source / 255.
+    if target.dtype == np.uint8:
+        target = target / 255.
+
+    th, tw = target.shape[:2]
+    sh, sw = source.shape[:2]
+
+    ey, ex = None, None  # event position
+    sy, sx = 0, 0        # source position (top left)
+    source_canvas = np.zeros((th, tw, 4))
+    source_canvas[sy:sy+sh, sx:sx+sw] = source
+
+    TITLE = 'Press ENTER when satisfied with your placement.'
+    fig = plt.figure()
+    plt.tick_params(axis='both', which='both', bottom='off', top='off',
+                    labelbottom='off', right='off', left='off', labelleft='off')
+    ax = fig.add_subplot(111)
+    ax.imshow(target)
+    ax.imshow(source_canvas)
+    ax.set_title(TITLE)
+
+    def onpress(event):
+        if None in (event.ydata, event.xdata):
+            return True
+        nonlocal ey, ex
+        ey = event.ydata
+        ex = event.xdata
+        return True
+
+    def onrelease(event):
+        if None in (event.ydata, event.xdata):
+            return True
+        nonlocal sy, sx
+        sy = np.clip(sy + int(event.ydata - ey), 0, th - sh)
+        sx = np.clip(sx + int(event.xdata - ex), 0, tw - sw)
+        source_canvas[:] = 0
+        source_canvas[sy:sy+sh, sx:sx+sw] = source
+
+        ax.clear()
+        ax.imshow(target)
+        ax.imshow(source_canvas)
+        ax.set_title(TITLE)
+        fig.canvas.draw_idle()
+        return True
+
+    def quit_figure(event):
+        # Source: https://github.com/matplotlib/matplotlib/issues/830/.
+        if event.key == 'enter':
+            plt.close(event.canvas.figure)
+
+    gcf = plt.gcf()
+    cid = gcf.canvas.mpl_connect('key_press_event', quit_figure)
+    did = gcf.canvas.mpl_connect('button_press_event', onpress)
+    eid = gcf.canvas.mpl_connect('button_release_event', onrelease)
+    plt.show()
+    return sy, sx
 
 #########
 # DEBUG #
@@ -104,5 +166,11 @@ def lasso(image):
 
 if __name__ == '__main__':
     from scipy import misc
-    output = lasso(misc.imread('images/penguin_chick.jpg'))
-    plt.imsave('output.png', output)
+    source = lasso(misc.imread('images/penguin_chick.jpg'))
+    plt.imsave('source.png', source)
+    print('[debug] saved lassoed region to `source.png`')
+
+    # drag and drop
+    target = misc.imread('images/im1.jpg')
+    sy, sx = drag_layer(source, target)
+    print('[debug] the coordinates: (%d, %d)' % (sy, sx))
