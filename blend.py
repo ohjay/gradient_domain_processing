@@ -38,6 +38,8 @@ def fuse(source, target, location, scale):
         source = source / 255.
     if target.dtype == np.uint8:
         target = target / 255.
+    source = source.astype(np.float32)
+    target = target.astype(np.float32)
 
     start_time = time.time()
     th, tw = target.shape[:2]
@@ -65,7 +67,7 @@ def fuse(source, target, location, scale):
                             Aval += 1
                             # mixed gradients
                             source_grad = source[y, x, ch] - source[ny, nx, ch]
-                            target_grad = target[y, x, ch] - target[ny, nx, ch]
+                            target_grad = target[ly + y, lx + x, ch] - target[ly + ny, lx + nx, ch]
                             if abs(source_grad) > abs(target_grad):
                                 bval += source_grad
                             else:
@@ -91,9 +93,12 @@ def fuse(source, target, location, scale):
                     A_j.append(ravel(y, x))
                     b.append(target[ly + y, lx + x, ch])
                 eqn_idx += 1  # equation for every pixel
+        A_data = np.array(A_data)
+        A_i = np.array(A_i)
+        A_j = np.array(A_j)
         A = sparse.coo_matrix((A_data, (A_i, A_j)), shape=(num_px, num_px))
         A = sparse.csc_matrix(A)
-        v = sparse.linalg.lsqr(A, b, iter_lim=1e3)[0]
+        v = sparse.linalg.lsqr(A, b, iter_lim=1e5)[0]
         v = np.clip(np.reshape(v, (sh - 2, sw - 2)), 0.0, 1.0)
         target[ly+1:ly+sh-1, lx+1:lx+sw-1, ch] = v  # paste region into target
     print('Time elapsed: %.4fs' % (time.time() - start_time))
