@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.widgets import LassoSelector
 import numpy as np
+import tkinter as tk
+import PIL.Image
+import PIL.ImageTk
 
 ########################
 # GDF SOURCE SELECTION #
@@ -75,6 +78,9 @@ def lasso(image):
         alpha_mask.flat[ind] = 1.0
         alpha_mask = alpha_mask[ymin:ymax, xmin:xmax]
         output = np.dstack((output, alpha_mask))
+        # [for rectangular source region]
+        # alpha_mask = np.ones((ymax-ymin, xmax-xmin))
+        # output = np.dstack((image[ymin:ymax, xmin:xmax], alpha_mask))
 
         ax.clear()
         ax.imshow(selected)
@@ -160,6 +166,69 @@ def drag_layer(source, target):
     plt.show()
     return sy, sx
 
+
+
+# ______ NEW ______
+
+
+
+class DragGuiTk(tk.Frame):
+
+    def __init__(self, root, source_path, target_path):
+        self.root = root
+        tk.Frame.__init__(self, root)
+
+        canvas_width = 500
+        canvas_height = 400
+        self.canvas = tk.Canvas(self, width=canvas_width, height=canvas_height)
+
+        basewidth = 500
+        img = PIL.Image.open(target_path)
+        wpercent = (basewidth / float(img.size[0]))
+        hsize = int((float(img.size[1]) * float(wpercent)))
+        self.target_image = PIL.ImageTk.PhotoImage(img.resize((basewidth, hsize), PIL.Image.ANTIALIAS))
+        self.source_image = PIL.ImageTk.PhotoImage(file=source_path)
+        # Need to use `create_image` for transparency
+        self.target_label = self.canvas.create_image(0, 0, image=self.target_image)
+        self.source_label = self.canvas.create_image(0, 0, image=self.source_image)
+        self.canvas.pack(side='top', fill='both', anchor='c')
+        self.canvas.bind('<Button-1>', self.onclick)
+        self.canvas.bind('<ButtonRelease-1>', self.onrelease)
+
+        self.motion_id = None
+        self.drag_start_x = 0
+        self.drag_start_y = 0
+        self.sy = 0
+        self.sx = 0
+
+    def onclick(self, event):
+        self.init_x = self.sx
+        self.init_y = self.sy
+        self.drag_start_x = event.x
+        self.drag_start_y = event.y
+        self.motion_id = self.canvas.bind('<B1-Motion>', self.onmotion)
+
+    def onmotion(self, event):
+        _sx = self.init_x + event.x - self.drag_start_x
+        _sy = self.init_y + event.y - self.drag_start_y
+        self.canvas.move(self.source_label, _sx - self.sx, _sy - self.sy)
+        self.sx = _sx
+        self.sy = _sy
+
+    def onrelease(self, event):
+        self.canvas.unbind('<B1-Motion>', self.motion_id)
+
+def drag_layer(source_path, target_path):
+    root = tk.Tk()
+    root.title('Close window when satisfied with your placement.')
+    root.resizable(width=False, height=False)
+
+    gui = DragGuiTk(root, source_path, target_path)
+    gui.pack()
+
+    root.mainloop()
+    return gui.sy, gui.sx
+
 #########
 # DEBUG #
 #########
@@ -171,6 +240,5 @@ if __name__ == '__main__':
     print('[debug] saved lassoed region to `source.png`')
 
     # drag and drop
-    target = misc.imread('images/im1.jpg')
-    sy, sx = drag_layer(source, target)
+    sy, sx = drag_layer('source.png', 'images/im1.jpg')
     print('[debug] the coordinates: (%d, %d)' % (sy, sx))
