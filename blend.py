@@ -15,7 +15,7 @@ from scipy import misc, sparse, signal
 
 from interface import lasso, drag_layer
 
-def fuse(source, target, location, scale):
+def fuse(source, target, location, scale, mixed_gradients=False):
     """Blend SOURCE into TARGET. Estimate v, where
     1. v(x, y) - v(x - 1, y) should match s(x, y) - s(x - 1, y)
     2. v(x, y) - v(x + 1, y) should match s(x, y) - s(x + 1, y)
@@ -68,10 +68,10 @@ def fuse(source, target, location, scale):
                             # mixed gradients
                             source_grad = source[y, x, ch] - source[ny, nx, ch]
                             target_grad = target[ly + y, lx + x, ch] - target[ly + ny, lx + nx, ch]
-                            if abs(source_grad) > abs(target_grad):
-                                bval += source_grad
-                            else:
+                            if mixed_gradients and abs(target_grad) > abs(source_grad):
                                 bval += target_grad
+                            else:
+                                bval += source_grad
                             ny2 = y + 2 * dy  # 2 away
                             nx2 = x + 2 * dx  # in gradient direction
                             if ny2 < 0 or nx2 < 0 or ny2 >= sh \
@@ -109,11 +109,11 @@ def fuse(source, target, location, scale):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('source', type=str, nargs='?', default='images/penguin_chick.jpg')
-    parser.add_argument('target', type=str, nargs='?', default='images/im1.jpg')
+    parser.add_argument('source', type=str, nargs='?', default='images/penguin_chick_small.jpg')
+    parser.add_argument('target', type=str, nargs='?', default='images/im1_small.jpg')
     args = parser.parse_args()
 
     source = lasso(misc.imread(args.source))
     target = misc.imread(args.target)
-    sy, sx = drag_layer(source, target)
+    sy, sx = drag_layer('source.png', args.target)
     fuse(source, target, (sy, sx), 1)

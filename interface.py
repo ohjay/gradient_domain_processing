@@ -35,7 +35,7 @@ def path_bbox(p):
                      [p[ix_max, 0], p[iy_max, 1]],
                      [p[ix_max, 0], p[iy_min, 1]]])
 
-def lasso(image):
+def lasso(image, save=True):
     """Lasso select a region in the source image.
     Adapted from https://gist.github.com/lebedov/9ac425419dea5e74270db907daf49df1.
     """
@@ -93,6 +93,8 @@ def lasso(image):
     cid = plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
     lasso = LassoSelector(ax, onselect)
     plt.show()
+    if save:
+        plt.imsave('source.png', output)
     return output
 
 ########################
@@ -183,7 +185,6 @@ def drag_layer(source_path, target_path):
 if __name__ == '__main__':
     from scipy import misc
     source = lasso(misc.imread('images/penguin_chick.jpg'))
-    plt.imsave('source.png', source)
     print('[debug] saved lassoed region to `source.png`')
 
     # drag and drop
