@@ -1,7 +1,12 @@
 #!/usr/bin/env python36
 
 """
+blend.py
+
 Image blending.
+
+Usage:
+    blend.py <source_path> <target_path> [-s <float>] [-mg]
 """
 
 import matplotlib
@@ -15,7 +20,7 @@ from scipy import misc, sparse, signal
 
 from interface import lasso, drag_layer
 
-def fuse(source, target, location, scale, mixed_gradients=False):
+def blend(source, target, location, mixed_gradients=False):
     """Blend SOURCE into TARGET. Estimate v, where
     1. v(x, y) - v(x - 1, y) should match s(x, y) - s(x - 1, y)
     2. v(x, y) - v(x + 1, y) should match s(x, y) - s(x + 1, y)
@@ -32,7 +37,6 @@ def fuse(source, target, location, scale, mixed_gradients=False):
     source: the source image as an RGBA array (only the relevant region)
     target: the target image as an RGB array
     location: the location in TARGET of the top-left corner of SOURCE
-    scale: scaling factor for the source image. Applied before setting the location.
     """
     if source.dtype == np.uint8:
         source = source / 255.
@@ -111,9 +115,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('source', type=str, nargs='?', default='images/penguin_chick_small.jpg')
     parser.add_argument('target', type=str, nargs='?', default='images/im1_small.jpg')
+    parser.add_argument('--scale', '-s', type=float, default=1.0)  # scaling factor for the source image
+    parser.add_argument('--mixed_gradients', '-mg', action='store_true', default=False)
     args = parser.parse_args()
 
-    source = lasso(misc.imread(args.source))
+    source = misc.imread(args.source)
+    if args.scale != 1.0:
+        source = misc.imresize(source, args.scale)
+
+    source = lasso(source)
     target = misc.imread(args.target)
-    sy, sx = drag_layer('source.png', args.target)
-    fuse(source, target, (sy, sx), 1)
+    sy, sx = drag_layer(source, target)
+    blend(source, target, (sy, sx), args.mixed_gradients)

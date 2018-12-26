@@ -105,12 +105,18 @@ class DragGuiTk(tk.Frame):
 
     MAX_CANVAS_DIM = 750
 
-    def __init__(self, root, source_path, target_path):
+    def __init__(self, root, source, target):
         self.root = root
         tk.Frame.__init__(self, root)
 
-        source = PIL.Image.open(source_path)
-        target = PIL.Image.open(target_path)
+        # Convert to PIL [alt: `PIL.Image.open(path)`]
+        if source.dtype != np.uint8:
+            source = source * 255
+        if target.dtype != np.uint8:
+            target = target * 255
+        source = PIL.Image.fromarray(source.astype('uint8'), 'RGBA')
+        target = PIL.Image.fromarray(target.astype('uint8'), 'RGB')
+
         sw, sh = source.size
         tw, th = target.size
         _scale = DragGuiTk.MAX_CANVAS_DIM / float(tw if tw > th else th)
@@ -167,12 +173,12 @@ class DragGuiTk(tk.Frame):
         sy = int(self.sy / self.scale)
         return np.clip(sy, 0, self.th - self.sh)
 
-def drag_layer(source_path, target_path):
+def drag_layer(source, target):
     root = tk.Tk()
     root.title('Close window when satisfied with your placement.')
     root.resizable(width=False, height=False)
 
-    gui = DragGuiTk(root, source_path, target_path)
+    gui = DragGuiTk(root, source, target)
     gui.pack()
 
     root.mainloop()
@@ -188,5 +194,5 @@ if __name__ == '__main__':
     print('[debug] saved lassoed region to `source.png`')
 
     # drag and drop
-    sy, sx = drag_layer('source.png', 'images/im1.jpg')
+    sy, sx = drag_layer(source, misc.imread('images/im1.jpg'))
     print('[debug] the coordinates: (%d, %d)' % (sy, sx))
