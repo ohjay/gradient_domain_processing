@@ -4,12 +4,12 @@ Image blending and NPR (non-photorealistic rendering).
 ## Usage
 ### Image Blending
 ```
-python main.py <path to source> <path to target>
+python3 blend.py <path to source> <path to target> [-mg]
 ```
 
 ### NPR
 ```
-python main.py <path to image> [-TODO]
+python3 npr.py <path to image> [-gm]
 ```
 
 ## Reference
