@@ -1,9 +1,8 @@
 # Gradient Domain Processing
 Image blending and NPR (non-photorealistic rendering).
 
-![plane_npr](images/plane_npr.jpg)
-![figeater_npr](images/figeater_npr.jpg)
-![bird_npr](images/bird_npr.jpg)
+![bird_npr](https://github.com/ohjay/gradient_domain_processing/blob/master/images/bird_npr.jpg?raw=true)
+![plane_npr](https://github.com/ohjay/gradient_domain_processing/blob/master/images/plane_npr.jpg?raw=true)
 
 ## Usage
 ### Image Blending
