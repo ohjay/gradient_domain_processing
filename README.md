@@ -1,6 +1,10 @@
 # Gradient Domain Processing
 Image blending and NPR (non-photorealistic rendering).
 
+![plane_npr](images/plane_npr.jpg)
+![figeater_npr](images/figeater_npr.jpg)
+![bird_npr](images/bird_npr.jpg)
+
 ## Usage
 ### Image Blending
 ```
