@@ -69,15 +69,10 @@ def lasso(image, save=True):
         b = path_bbox(verts)
         ymin, ymax = int(min(b[:, 1])), int(max(b[:, 1])) + 1
         xmin, xmax = int(min(b[:, 0])), int(max(b[:, 0])) + 1
-        output = np.zeros_like(image)
-        output[:, :, 0].flat[ind] = image[:, :, 0].flat[ind]
-        output[:, :, 1].flat[ind] = image[:, :, 1].flat[ind]
-        output[:, :, 2].flat[ind] = image[:, :, 2].flat[ind]
-        output = output[ymin:ymax, xmin:xmax]
         alpha_mask = np.zeros((height, width))
         alpha_mask.flat[ind] = 1.0
         alpha_mask = alpha_mask[ymin:ymax, xmin:xmax]
-        output = np.dstack((output, alpha_mask))
+        output = np.dstack((image[ymin:ymax, xmin:xmax], alpha_mask))
 
         ax.clear()
         ax.imshow(selected)
